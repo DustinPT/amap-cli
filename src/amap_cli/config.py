@@ -81,27 +81,67 @@ def get_config_path() -> Path:
     return get_config_dir() / CONFIG_FILE_NAME
 
 
+def _merge_error_details(
+    current: Any | None,
+    *,
+    path: Path,
+    operation: str | None = None,
+    exc: BaseException | None = None,
+) -> dict[str, Any]:
+    """Attach config file context to an error payload."""
+    details = current.copy() if isinstance(current, dict) else {}
+    details["path"] = str(path)
+    if operation is not None:
+        details["operation"] = operation
+    if exc is not None:
+        details["type"] = type(exc).__name__
+        details["reason"] = str(exc)
+    return details
+
+
 def load_config(*, required: bool = False) -> AmapConfig | None:
     """Load config from disk, optionally requiring it to exist."""
     path = get_config_path()
-    if not path.exists():
+    try:
+        exists = path.exists()
+    except OSError as exc:
+        raise ConfigError(
+            "检查配置文件状态失败。",
+            details=_merge_error_details(None, path=path, operation="stat", exc=exc),
+        ) from exc
+
+    if not exists:
         if required:
             raise MissingConfigError(
-                "未找到高德 API 配置，请先执行 `amap-cli config set --api-key <KEY>`。"
+                "未找到高德 API 配置，请先执行 `amap-cli config set --api-key <KEY>`。",
+                details=_merge_error_details(None, path=path),
             )
         return None
 
     try:
         raw = json.loads(path.read_text(encoding="utf-8"))
     except json.JSONDecodeError as exc:
-        raise ConfigError("配置文件不是合法的 JSON。", details={"path": str(path)}) from exc
+        raise ConfigError(
+            "配置文件不是合法的 JSON。",
+            details=_merge_error_details(None, path=path, operation="read", exc=exc),
+        ) from exc
     except OSError as exc:
-        raise ConfigError("读取配置文件失败。", details={"path": str(path)}) from exc
+        raise ConfigError(
+            "读取配置文件失败。",
+            details=_merge_error_details(None, path=path, operation="read", exc=exc),
+        ) from exc
 
     if not isinstance(raw, dict):
-        raise ConfigError("配置文件内容格式无效。", details={"path": str(path)})
+        raise ConfigError(
+            "配置文件内容格式无效。",
+            details=_merge_error_details(None, path=path),
+        )
 
-    return AmapConfig.from_dict(raw)
+    try:
+        return AmapConfig.from_dict(raw)
+    except ConfigError as exc:
+        exc.details = _merge_error_details(exc.details, path=path)
+        raise
 
 
 def save_config(
@@ -131,11 +171,29 @@ def save_config(
         config.timeout_seconds = float(timeout_seconds)
 
     path = get_config_path()
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(
-        json.dumps(config.to_dict(), ensure_ascii=False, indent=2) + "\n",
-        encoding="utf-8",
-    )
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+    except OSError as exc:
+        raise ConfigError(
+            "创建配置目录失败。",
+            details=_merge_error_details(
+                None,
+                path=path.parent,
+                operation="create_dir",
+                exc=exc,
+            ),
+        ) from exc
+
+    try:
+        path.write_text(
+            json.dumps(config.to_dict(), ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
+    except OSError as exc:
+        raise ConfigError(
+            "写入配置文件失败。",
+            details=_merge_error_details(None, path=path, operation="write", exc=exc),
+        ) from exc
 
     if os.name != "nt":
         try:
