@@ -87,6 +87,24 @@ amap-cli search-poi --keyword 星巴克 --city 北京
 - `distance` 命令在起终点都为坐标时可直接本地计算，不依赖 API Key
 - 建议 Agent 直接解析命令返回的 JSON 结果
 
+如果需要将内置 skill 安装到指定目录，例如 Agent 的 skills 根目录，可以执行：
+
+```bash
+amap-cli install-skill --dir ~/.agents/skills
+```
+
+执行后会在目标目录下生成：
+
+```text
+~/.agents/skills/amap-cli/SKILL.md
+```
+
+如果目标目录中已存在同名 skill，可追加 `--force` 覆盖：
+
+```bash
+amap-cli install-skill --dir ~/.agents/skills --force
+```
+
 ## 命令说明
 
 ### 配置
@@ -108,6 +126,24 @@ amap-cli config show
 ```text
 ~/Library/Application Support/amap-cli/config.json
 ```
+
+### 安装 Skill
+
+基础格式：
+
+```bash
+amap-cli install-skill --dir <skills目录>
+```
+
+可选参数：
+
+- `--force`
+
+说明：
+
+- 会将内置的 `amap-cli` skill 安装到目标目录下的 `amap-cli/` 子目录
+- 当目标目录不存在时会自动创建
+- 当目标目录中已存在同名 skill 时，默认报错；追加 `--force` 后会覆盖
 
 ### 路径规划
 

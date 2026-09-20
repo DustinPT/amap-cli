@@ -11,6 +11,7 @@ from amap_cli.errors import AmapCliError, ValidationError
 from amap_cli.output import emit_error, emit_success
 from amap_cli.route import register_route_command
 from amap_cli.search_poi import register_search_poi_command
+from amap_cli.skill import register_install_skill_command
 
 
 class JsonArgumentParser(argparse.ArgumentParser):
@@ -29,6 +30,7 @@ def build_parser() -> JsonArgumentParser:
     subparsers = parser.add_subparsers(dest="command")
 
     _register_config_command(subparsers)
+    register_install_skill_command(subparsers)
     register_distance_command(subparsers)
     register_route_command(subparsers)
     register_search_poi_command(subparsers)
