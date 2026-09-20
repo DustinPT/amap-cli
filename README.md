@@ -226,16 +226,58 @@ uv run amap-cli --help
 
 ## PyPI 发布
 
-构建分发包：
+### 1. 确认版本号
+
+每次发布前，先更新 `pyproject.toml` 中的 `version`。  
+PyPI 不允许重复上传同一个版本号的分发包。
+
+### 2. 构建分发包
 
 ```bash
 uv build
 ```
 
-发布到 PyPI：
+构建成功后会在 `dist/` 目录下生成：
+
+- `*.tar.gz`
+- `*.whl`
+
+### 3. 准备 PyPI Token
+
+登录 PyPI 后创建 API Token，推荐通过环境变量传入：
+
+```bash
+export UV_PUBLISH_TOKEN="pypi-你的token"
+```
+
+### 4. 先发布到 TestPyPI 验证（推荐）
+
+```bash
+uv publish \
+  --publish-url https://test.pypi.org/legacy/ \
+  --check-url https://test.pypi.org/simple/
+```
+
+如果只是验证包能否被安装，可以执行：
+
+```bash
+uvx --index https://test.pypi.org/simple/ amap-cli --help
+```
+
+### 5. 发布到正式 PyPI
+
+确认 TestPyPI 验证通过后，执行：
 
 ```bash
 uv publish
+```
+
+### 6. 发布后验证
+
+发布完成后，推荐优先使用 `uvx` 做一次快速验证：
+
+```bash
+uvx amap-cli --help
 ```
 
 发布后，推荐优先使用 `uvx amap-cli` 进行一次性调用，或使用 `uv tool install amap-cli` 安装到本地。
