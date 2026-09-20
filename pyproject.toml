@@ -1,0 +1,20 @@
+[build-system]
+requires = ["hatchling>=1.27.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "amap-cli"
+version = "0.1.0"
+description = "Pure command-line CLI for Amap APIs."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.scripts]
+amap-cli = "amap_cli.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/amap_cli"]
+
+[tool.uv]
+package = true
