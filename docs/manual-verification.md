@@ -24,10 +24,35 @@ uv run python -m amap_cli --help
 结果：
 
 - `uv sync` 成功完成本地安装
-- `amap-cli --help` 正确显示 `config`、`distance`、`route`、`search-poi` 四个子命令
+- `amap-cli --help` 正确显示 `config`、`geocode`、`distance`、`route`、`search-poi` 五个子命令
 - `python -m amap_cli --help` 与脚本入口行为一致
 
-### 2. `distance` 坐标输入走本地直线距离计算
+### 2. `geocode` 典型输入通过 CLI 主入口走通到 handler
+
+说明：
+
+- 使用 `amap_cli.cli.main(...)` 作为 CLI 主入口
+- 通过 monkeypatch 将 `amap_cli.geocode_command.AmapApiClient` 替换为假 client
+- 仍然走真实参数解析、handler 与统一 JSON 输出
+
+验证输入：
+
+```bash
+geocode --address 北京南站
+```
+
+假 client 返回：
+
+- `/v3/geocode/geo`：北京南站的坐标与标准化地址
+
+结果：
+
+- CLI 返回 `success=true`
+- `state.address` 正确保留原始查询
+- `geocode.location` 返回坐标数组
+- `geocode.formattedAddress` 正确透传
+
+### 3. `distance` 坐标输入走本地直线距离计算
 
 执行：
 
@@ -42,7 +67,7 @@ uv run amap-cli distance --from 116.397,39.909 --to 116.407,39.904
 - `state.mode=straight_line`
 - `summary.distance` 返回两点之间的直线距离（米）
 
-### 3. 配置写入与自动读取
+### 4. 配置写入与自动读取
 
 为避免污染真实用户配置，验证时使用隔离 `HOME`：
 
@@ -59,7 +84,7 @@ HOME="$TMP_HOME" uv run amap-cli config show
 - 再次执行 `config show` 时可自动读取刚写入的配置
 - `api_key` 输出已脱敏
 
-### 4. `route` 典型输入通过 CLI 主入口走通到 handler
+### 5. `route` 典型输入通过 CLI 主入口走通到 handler
 
 说明：
 
@@ -85,7 +110,7 @@ route --from 北京南站 --to 天安门 --type driving
 - 起终点地名与坐标正确进入输出
 - `summary.distance`、`summary.time`、`summary.steps` 正常生成
 
-### 5. `search-poi` 典型输入通过 CLI 主入口走通到 handler
+### 6. `search-poi` 典型输入通过 CLI 主入口走通到 handler
 
 说明：
 
@@ -130,5 +155,5 @@ search-poi --keyword 星巴克 --city 北京 --pageSize 1
 
 结论：
 
-- 当前五项手动验证均已通过
-- CLI 主入口已完成 `distance`、`route`、`search-poi` 整合
+- 当前六项手动验证均已通过
+- CLI 主入口已完成 `geocode`、`distance`、`route`、`search-poi` 整合

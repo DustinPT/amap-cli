@@ -1,17 +1,17 @@
 ---
 name: amap-cli
-description: Use amap-cli for terminal-based Amap distance calculation, route planning, and POI search. Use when the user needs machine-readable map results in this project. Do not use for GUI-based map interaction.
+description: Use amap-cli for terminal-based Amap geocoding, distance calculation, route planning, and POI search. Use when the user needs machine-readable map results in this project. Do not use for GUI-based map interaction.
 ---
 
 # Amap CLI
 
-在需要高德地图直线距离计算、路径规划或 POI 搜索时，直接调用 `amap-cli`。
+在需要高德地图地理编码、直线距离计算、路径规划或 POI 搜索时，直接调用 `amap-cli`。
 
 ## 操作规则
 
 - 统一使用 `uvx amap-cli` 调用命令
 - 优先返回和解析 JSON 结果，不依赖自然语言输出
-- 在执行 `route` 或 `search-poi` 前，先确认高德 API Key 已配置
+- 在执行 `geocode`、`route` 或 `search-poi` 前，先确认高德 API Key 已配置
 - 在执行 `distance` 前，若起终点包含地名，也需要先确认高德 API Key 已配置
 - 如果返回 `MISSING_CONFIG`，先执行配置命令，再继续业务调用
 
@@ -34,6 +34,32 @@ uvx amap-cli config set --api-key <YOUR_AMAP_KEY>
 ```bash
 uvx amap-cli config show
 ```
+
+## Geocode
+
+需要将结构化地址或地标名称解析为坐标时，使用 `geocode`：
+
+```bash
+uvx amap-cli geocode --address 北京南站
+```
+
+如果需要缩小解析范围，可追加城市：
+
+```bash
+uvx amap-cli geocode --address 软件园二期 --city 厦门
+```
+
+关键参数：
+
+- `--address`：必填，结构化地址、地标性名胜景区或建筑物名称
+- `--city`：可选，用于缩小地理编码范围
+
+关键约束：
+
+- 地理编码仅支持详细的结构化地址，以及地标性名胜景区、建筑物名称
+- 返回结果中的 `geocode.location` 为 `[经度, 纬度]`
+- 返回结果中的 `geocode.formattedAddress` 可用于判断解析是否符合预期
+- 对于较模糊的名称，优先补充更完整的地址信息或追加 `--city`
 
 ## Route
 

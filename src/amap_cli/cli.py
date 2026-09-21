@@ -8,6 +8,7 @@ from typing import Any, Sequence
 from amap_cli.config import get_config_path, load_config, save_config
 from amap_cli.distance import register_distance_command
 from amap_cli.errors import AmapCliError, ValidationError
+from amap_cli.geocode_command import register_geocode_command
 from amap_cli.output import emit_error, emit_success
 from amap_cli.route import register_route_command
 from amap_cli.search_poi import register_search_poi_command
@@ -31,6 +32,7 @@ def build_parser() -> JsonArgumentParser:
 
     _register_config_command(subparsers)
     register_install_skill_command(subparsers)
+    register_geocode_command(subparsers)
     register_distance_command(subparsers)
     register_route_command(subparsers)
     register_search_poi_command(subparsers)

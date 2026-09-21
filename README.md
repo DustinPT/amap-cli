@@ -6,6 +6,7 @@
 
 - 纯命令行调用高德地图 API
 - 支持命令行写入和读取高德 API Key
+- 支持地理编码
 - 支持两点直线距离计算
 - 支持路径规划
 - 支持 POI 搜索
@@ -26,6 +27,12 @@ uvx amap-cli --help
 
 ```bash
 uvx amap-cli config set --api-key <YOUR_AMAP_KEY>
+```
+
+地理编码示例：
+
+```bash
+uvx amap-cli geocode --address 北京南站
 ```
 
 路径规划示例：
@@ -72,6 +79,7 @@ amap-cli --help
 
 ```bash
 amap-cli config set --api-key <YOUR_AMAP_KEY>
+amap-cli geocode --address 北京南站
 amap-cli distance --from 116.397,39.909 --to 116.407,39.904
 amap-cli route --from 北京南站 --to 天安门 --type driving
 amap-cli search-poi --keyword 星巴克 --city 北京
@@ -83,7 +91,7 @@ amap-cli search-poi --keyword 星巴克 --city 北京
 
 - skill 的目标是让 Agent 直接通过 `uvx amap-cli` 调用本工具
 - 使用方式与上面的“直接使用 `uvx` 运行”一致
-- 使用前先配置高德 API Key，之后即可发起路径规划和 POI 搜索
+- 使用前先配置高德 API Key，之后即可发起地理编码、路径规划和 POI 搜索
 - `distance` 命令在起终点都为坐标时可直接本地计算，不依赖 API Key
 - 建议 Agent 直接解析命令返回的 JSON 结果
 
@@ -144,6 +152,26 @@ amap-cli install-skill --dir <skills目录>
 - 会将内置的 `amap-cli` skill 安装到目标目录下的 `amap-cli/` 子目录
 - 当目标目录不存在时会自动创建
 - 当目标目录中已存在同名 skill 时，默认报错；追加 `--force` 后会覆盖
+
+### 地理编码
+
+基础格式：
+
+```bash
+amap-cli geocode --address <结构化地址|地标名称>
+```
+
+可选参数：
+
+- `--city`
+
+说明：
+
+- 调用高德地理编码接口，将结构化地址或地标性名胜景区、建筑物名称解析为坐标
+- 传入 `--city` 时，会优先在对应城市范围内解析
+- 返回结果中的 `geocode.location` 为 `[经度, 纬度]`
+- 返回结果中的 `geocode.formattedAddress` 为高德返回的标准化地址
+- 对于较模糊的名称，建议补充更完整地址或增加 `--city`
 
 ### 路径规划
 
