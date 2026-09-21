@@ -13,6 +13,8 @@ description: Use amap-cli for terminal-based Amap geocoding, distance calculatio
 - 优先返回和解析 JSON 结果，不依赖自然语言输出
 - 在执行 `geocode`、`route` 或 `search-poi` 前，先确认高德 API Key 已配置
 - 在执行 `distance` 前，若起终点包含地名，也需要先确认高德 API Key 已配置
+- 如果同一个地点后续还要重复用于 `distance`、`route` 或 `search-poi` 周边搜索，先调用 `geocode` 或 `search-poi` 获取坐标，后续优先传 `经度,纬度`，不要重复传地名，以减少地理编码 API 调用量
+- 结构化地址、地标性名胜景区或建筑物名称优先使用 `geocode` 获取坐标；较模糊的地点名称优先使用 `search-poi` 获取目标坐标
 - 如果返回 `MISSING_CONFIG`，先执行配置命令，再继续业务调用
 
 ## 初始化
@@ -97,9 +99,16 @@ uvx amap-cli route \
 - `--type transit` 必须显式传 `--city`
 - `--waypoints` 和 `--policy` 只能和 `--type driving` 一起使用
 - `--strategy` 只能和 `--type transit` 一起使用
+- 如果起点、终点或途经点后续会复用，先用 `geocode` 或 `search-poi` 拿到坐标，再将坐标传给 `--from`、`--to`、`--waypoints`
 - 地理编码仅支持详细的结构化地址，以及地标性名胜景区、建筑物名称
 - 当输入为上述名称时，可从 `state.from.formattedAddress`、`state.to.formattedAddress` 以及 `state.waypoints[*].formattedAddress` 判断解析是否符合预期
 - 对于其他较模糊的名称，先使用 `search-poi` 获取目标坐标，再调用 `route`
+
+推荐流程：
+
+1. 首次解析地点时，使用 `geocode` 或 `search-poi` 获取坐标
+2. 后续多次规划路线时，统一复用坐标
+3. 如需保留地点语义，可配合 `--from-name` / `--to-name`
 
 ## Distance
 
@@ -129,6 +138,7 @@ uvx amap-cli distance \
 
 - 当 `--from` 和 `--to` 都是坐标时，直接本地计算，不依赖 API Key
 - 任一输入为结构化地址或地标性名胜景区、建筑物名称时，会先调用地理编码接口解析坐标
+- 如果某个地点后续还会继续参与其他计算，首次解析后应复用坐标，避免再次以地名触发地理编码
 - 当输入为上述名称时，可从 `state.from.formattedAddress` / `state.to.formattedAddress` 判断地理编码是否符合预期
 - 对于其他较模糊的名称，先使用 `search-poi` 获取目标坐标，再调用 `distance`
 - 结果中的 `summary.distance` 单位为米
@@ -167,6 +177,7 @@ uvx amap-cli search-poi \
 - 传入 `--center` 时执行周边搜索
 - 未传入 `--center` 时执行关键词搜索
 - `--radius` 只有在传入 `--center` 时才应该使用
+- 如果要围绕某个地点反复做周边搜索，先使用 `geocode` 或 `search-poi` 获取该地点坐标，再持续复用 `--center`，不要每次都传地点名称重新解析
 
 ## 输出约定
 
