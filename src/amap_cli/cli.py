@@ -56,6 +56,11 @@ def _register_config_command(
         type=float,
         help="请求超时时间（秒）",
     )
+    set_parser.add_argument(
+        "--request-sleep-seconds",
+        type=float,
+        help="每次高德 API 调用结束后的 sleep 时间（秒，0 表示关闭）",
+    )
     set_parser.set_defaults(handler=_handle_config_set)
 
     show_parser = config_subparsers.add_parser("show", help="查看当前配置（敏感信息脱敏）")
@@ -73,15 +78,17 @@ def _handle_config_set(args: argparse.Namespace) -> dict[str, Any]:
         args.api_key is None
         and args.base_url is None
         and args.timeout_seconds is None
+        and args.request_sleep_seconds is None
     ):
         raise ValidationError(
-            "请至少提供一个配置项，例如 `--api-key`、`--base-url` 或 `--timeout-seconds`。"
+            "请至少提供一个配置项，例如 `--api-key`、`--base-url`、`--timeout-seconds` 或 `--request-sleep-seconds`。"
         )
 
     config = save_config(
         api_key=args.api_key,
         base_url=args.base_url,
         timeout_seconds=args.timeout_seconds,
+        request_sleep_seconds=args.request_sleep_seconds,
     )
     return {
         "message": "配置已保存。",

@@ -15,6 +15,7 @@ APP_NAME = "amap-cli"
 CONFIG_FILE_NAME = "config.json"
 DEFAULT_BASE_URL = "https://restapi.amap.com"
 DEFAULT_TIMEOUT_SECONDS = 10.0
+DEFAULT_REQUEST_SLEEP_SECONDS = 0.34
 
 
 @dataclass(slots=True)
@@ -24,6 +25,7 @@ class AmapConfig:
     api_key: str | None = None
     base_url: str = DEFAULT_BASE_URL
     timeout_seconds: float = DEFAULT_TIMEOUT_SECONDS
+    request_sleep_seconds: float = DEFAULT_REQUEST_SLEEP_SECONDS
 
     @classmethod
     def from_dict(cls, raw: dict[str, Any]) -> "AmapConfig":
@@ -31,6 +33,10 @@ class AmapConfig:
         api_key = raw.get("api_key")
         base_url = raw.get("base_url", DEFAULT_BASE_URL)
         timeout_seconds = raw.get("timeout_seconds", DEFAULT_TIMEOUT_SECONDS)
+        request_sleep_seconds = raw.get(
+            "request_sleep_seconds",
+            DEFAULT_REQUEST_SLEEP_SECONDS,
+        )
 
         if api_key is not None and not isinstance(api_key, str):
             raise ConfigError("配置文件中的 api_key 格式无效。")
@@ -38,6 +44,11 @@ class AmapConfig:
             raise ConfigError("配置文件中的 base_url 格式无效。")
         if not isinstance(timeout_seconds, (int, float)) or timeout_seconds <= 0:
             raise ConfigError("配置文件中的 timeout_seconds 格式无效。")
+        if (
+            not isinstance(request_sleep_seconds, (int, float))
+            or request_sleep_seconds < 0
+        ):
+            raise ConfigError("配置文件中的 request_sleep_seconds 格式无效。")
 
         normalized_api_key = None
         if api_key is not None:
@@ -47,6 +58,7 @@ class AmapConfig:
             api_key=normalized_api_key,
             base_url=base_url.strip(),
             timeout_seconds=float(timeout_seconds),
+            request_sleep_seconds=float(request_sleep_seconds),
         )
 
     def to_dict(self, *, mask_secrets: bool = False) -> dict[str, Any]:
@@ -149,6 +161,7 @@ def save_config(
     api_key: str | None = None,
     base_url: str | None = None,
     timeout_seconds: float | None = None,
+    request_sleep_seconds: float | None = None,
 ) -> AmapConfig:
     """Persist config updates to the OS-specific config path."""
     config = load_config(required=False) or AmapConfig()
@@ -169,6 +182,11 @@ def save_config(
         if timeout_seconds <= 0:
             raise ValidationError("`--timeout-seconds` 必须大于 0。")
         config.timeout_seconds = float(timeout_seconds)
+
+    if request_sleep_seconds is not None:
+        if request_sleep_seconds < 0:
+            raise ValidationError("`--request-sleep-seconds` 不能小于 0。")
+        config.request_sleep_seconds = float(request_sleep_seconds)
 
     path = get_config_path()
     try:

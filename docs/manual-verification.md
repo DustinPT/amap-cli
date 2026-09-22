@@ -74,6 +74,7 @@ uv run amap-cli distance --from 116.397,39.909 --to 116.407,39.904
 ```bash
 TMP_HOME=$(mktemp -d)
 HOME="$TMP_HOME" uv run amap-cli config set --api-key test-demo-key --timeout-seconds 12
+HOME="$TMP_HOME" uv run amap-cli config set --request-sleep-seconds 0
 HOME="$TMP_HOME" uv run amap-cli config show
 ```
 
@@ -83,6 +84,7 @@ HOME="$TMP_HOME" uv run amap-cli config show
 - macOS 下配置落在 `~/Library/Application Support/amap-cli/config.json`
 - 再次执行 `config show` 时可自动读取刚写入的配置
 - `api_key` 输出已脱敏
+- `request_sleep_seconds` 可写入为 `0`，用于关闭默认的请求后 sleep
 
 ### 5. `route` 典型输入通过 CLI 主入口走通到 handler
 

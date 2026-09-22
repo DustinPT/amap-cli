@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import time
 from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
@@ -39,32 +40,36 @@ class AmapApiClient:
         )
 
         try:
-            with urlopen(request, timeout=self.config.timeout_seconds) as response:
-                body = response.read().decode("utf-8")
-        except HTTPError as exc:
-            response_body = exc.read().decode("utf-8", errors="ignore")
-            raise ApiRequestError(
-                f"高德 API HTTP 请求失败：{exc.code}",
-                details={"status": exc.code, "body": response_body},
-            ) from exc
-        except URLError as exc:
-            raise ApiRequestError(
-                "无法连接高德 API。",
-                details={"reason": str(exc.reason)},
-            ) from exc
-        except TimeoutError as exc:
-            raise ApiRequestError("请求高德 API 超时。") from exc
+            try:
+                with urlopen(request, timeout=self.config.timeout_seconds) as response:
+                    body = response.read().decode("utf-8")
+            except HTTPError as exc:
+                response_body = exc.read().decode("utf-8", errors="ignore")
+                raise ApiRequestError(
+                    f"高德 API HTTP 请求失败：{exc.code}",
+                    details={"status": exc.code, "body": response_body},
+                ) from exc
+            except URLError as exc:
+                raise ApiRequestError(
+                    "无法连接高德 API。",
+                    details={"reason": str(exc.reason)},
+                ) from exc
+            except TimeoutError as exc:
+                raise ApiRequestError("请求高德 API 超时。") from exc
 
-        try:
-            payload = json.loads(body)
-        except json.JSONDecodeError as exc:
-            raise ApiRequestError(
-                "高德 API 返回了非 JSON 响应。",
-                details={"body": body[:500]},
-            ) from exc
+            try:
+                payload = json.loads(body)
+            except json.JSONDecodeError as exc:
+                raise ApiRequestError(
+                    "高德 API 返回了非 JSON 响应。",
+                    details={"body": body[:500]},
+                ) from exc
 
-        self._raise_for_amap_error(payload)
-        return payload
+            self._raise_for_amap_error(payload)
+            return payload
+        finally:
+            if self.config.request_sleep_seconds > 0:
+                time.sleep(self.config.request_sleep_seconds)
 
     def _build_url(self, path: str, params: dict[str, Any]) -> str:
         """Build a full request URL from config and query params."""

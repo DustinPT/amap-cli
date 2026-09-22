@@ -29,6 +29,13 @@ uvx amap-cli --help
 uvx amap-cli config set --api-key <YOUR_AMAP_KEY>
 ```
 
+高德免费账号默认限流较严，工具默认会在每次 API 调用结束后 sleep `0.34` 秒；如需调整或关闭，可配置：
+
+```bash
+uvx amap-cli config set --request-sleep-seconds 0.34
+uvx amap-cli config set --request-sleep-seconds 0
+```
+
 地理编码示例：
 
 ```bash
@@ -123,6 +130,18 @@ amap-cli install-skill --dir ~/.agents/skills --force
 amap-cli config set --api-key <YOUR_AMAP_KEY>
 ```
 
+设置每次高德 API 调用结束后的 sleep 时间：
+
+```bash
+amap-cli config set --request-sleep-seconds 0.34
+```
+
+关闭该 sleep：
+
+```bash
+amap-cli config set --request-sleep-seconds 0
+```
+
 查看当前配置：
 
 ```bash
@@ -134,6 +153,12 @@ amap-cli config show
 ```text
 ~/Library/Application Support/amap-cli/config.json
 ```
+
+说明：
+
+- `request_sleep_seconds` 默认为 `0.34`
+- 该配置会在每次真实的高德 API 调用结束后执行一次 sleep
+- 设置为 `0` 表示关闭节流等待
 
 ### 安装 Skill
 
