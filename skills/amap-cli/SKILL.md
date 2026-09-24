@@ -1,6 +1,6 @@
 ---
 name: amap-cli
-description: Use amap-cli for terminal-based Amap geocoding, distance calculation, route planning, and POI search. Use when the user needs machine-readable map results in this project. Do not use for GUI-based map interaction.
+description: Use amap-cli for Amap geocoding, POI search, distance calculation, and route planning. Invoke when you need to resolve locations, find nearby places, calculate straight-line distances, or plan driving, walking, cycling, or transit routes using structured JSON results.
 ---
 
 # Amap CLI
@@ -15,6 +15,8 @@ description: Use amap-cli for terminal-based Amap geocoding, distance calculatio
 - 在执行 `distance` 前，若起终点包含地名，也需要先确认高德 API Key 已配置
 - 如果同一个地点后续还要重复用于 `distance`、`route` 或 `search-poi` 周边搜索，先调用 `geocode` 或 `search-poi` 获取坐标，后续优先传 `经度,纬度`，不要重复传地名，以减少地理编码 API 调用量
 - 结构化地址、地标性名胜景区或建筑物名称优先使用 `geocode` 获取坐标；较模糊的地点名称优先使用 `search-poi` 获取目标坐标
+- 使用 `search-poi` 解析地点时，不要默认第一条结果就是目标地点；应结合名称、详细地址、行政区和坐标上下文比对后再选定目标
+- 一旦采用某条 `search-poi` 结果作为目标地点，回复中应明确说明采用的是哪一条结果，并注明名称、地址等关键信息
 - 如果返回 `MISSING_CONFIG`，先执行配置命令，再继续业务调用
 
 ## 初始化
@@ -89,9 +91,9 @@ uvx amap-cli route \
 - `--to`：终点，支持结构化地址、地标性名胜景区/建筑物名称或 `经度,纬度`
 - `--type`：必填，可选 `driving`、`walking`、`riding`、`transit`
 - `--from-name` / `--to-name`：坐标输入时可选，用于指定显示名称
-- `--waypoints`：驾车途经点，使用 `+` 分隔，仅 `driving` 支持
-- `--policy`：驾车策略，仅 `driving` 支持
-- `--strategy`：公交策略，仅 `transit` 支持
+- `--waypoints`：驾车途经点，使用 `+` 分隔，仅 `driving` 支持，例如 `国贸+三元桥` 或 `116.1,39.9+中关村`
+- `--policy`：驾车策略，仅 `driving` 支持，可选 `fastest`、`least_fee`、`shortest`、`no_highway`、`avoid_jam`
+- `--strategy`：公交策略，仅 `transit` 支持，可选 `fastest`、`least_cost`、`least_walk`、`most_comfort`、`no_subway`
 - `--city`：公交规划城市，`transit` 时必填
 
 关键约束：
@@ -177,6 +179,8 @@ uvx amap-cli search-poi \
 - 传入 `--center` 时执行周边搜索
 - 未传入 `--center` 时执行关键词搜索
 - `--radius` 只有在传入 `--center` 时才应该使用
+- 不要默认第一条 POI 结果就是目标地点；应至少比对名称、地址或行政区信息，必要时结合坐标上下文进一步确认
+- 当选定某条 POI 结果作为后续 `distance`、`route` 或周边搜索的目标时，回复中应明确说明采用的是哪条结果，并写明其名称、地址和坐标等关键信息
 - 如果要围绕某个地点反复做周边搜索，先使用 `geocode` 或 `search-poi` 获取该地点坐标，再持续复用 `--center`，不要每次都传地点名称重新解析
 
 ## 输出约定
